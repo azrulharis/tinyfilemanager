@@ -1,19 +1,16 @@
 <?php
+
+ 
+
 //Default Configuration
 $CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"calc_folder":false,"theme":"light"}';
 
-
-/**
- * H3K | Tiny File Manager V2.4.7
- * CCP Programmers | ccpprogrammers@gmail.com
- * https://tinyfilemanager.github.io
- */
-
+ 
 //TFM version
 define('VERSION', '2.4.7');
 
 //Application Title
-define('APP_TITLE', 'Tiny File Manager');
+define('APP_TITLE', 'RPS File Manager');
 
 // --- EDIT BELOW CONFIGURATION CAREFULLY ---
 
@@ -26,8 +23,8 @@ $use_auth = true;
 // Users: array('Username' => 'Password', 'Username2' => 'Password2', ...)
 // Generate secure password hash - https://tinyfilemanager.github.io/docs/pwd.html
 $auth_users = array(
-    'admin' => '$2y$10$/K.hjNr84lLNDt8fTXjoI.DBp6PpeyoJ.mGwrrLuCZfAwfSAGqhOW', //admin@123
-    'user' => '$2y$10$Fg6Dz8oH9fPoZ2jJan5tZuv6Z4Kp7avtQ9bDfrdRntXtPeiMAZyGO' //12345
+    'admin' => '',  
+    'user' => ''  
 );
 
 // Readonly users
@@ -37,7 +34,7 @@ $readonly_users = array(
 );
 
 // Global readonly, including when auth is not being used
-$global_readonly = false;
+$global_readonly = true;
 
 // user specific directories
 // array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
@@ -55,11 +52,12 @@ $edit_files = true;
 
 // Default timezone for date() and time()
 // Doc - http://php.net/manual/en/timezones.php
-$default_timezone = 'Etc/UTC'; // UTC
+$default_timezone = 'Asia/Kuala_Lumpur'; // UTC
 
 // Root path for file manager
 // use absolute path of directory i.e: '/var/www/folder' or $_SERVER['DOCUMENT_ROOT'].'/folder'
-$root_path = $_SERVER['DOCUMENT_ROOT'];
+$root_path = $_SERVER['DOCUMENT_ROOT'] . '/rps/webroot/rms/fms/SDS/'; 
+
 
 // Root url for links in file manager.Relative to $http_host. Variants: '', 'path/to/subfolder'
 // Will not working if $root_path will be outside of server document root
@@ -287,7 +285,7 @@ if ($ip_ruleset != 'OFF') {
     }
 }
 
-// Auth
+// Auth Login
 if ($use_auth) {
     if (isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_ID]['logged']])) {
         // Logged
@@ -297,6 +295,22 @@ if ($use_auth) {
         if(function_exists('password_verify')) {
             if (isset($auth_users[$_POST['fm_usr']]) && isset($_POST['fm_pwd']) && password_verify($_POST['fm_pwd'], $auth_users[$_POST['fm_usr']])) {
                 $_SESSION[FM_SESSION_ID]['logged'] = $_POST['fm_usr'];
+                fm_set_msg(lng('You are logged in'));
+                fm_redirect(FM_SELF_URL . '?p=');
+            } else {
+                unset($_SESSION[FM_SESSION_ID]['logged']);
+                fm_set_msg(lng('Login failed. Invalid username or password'), 'error');
+                fm_redirect(FM_SELF_URL);
+            }
+        } else {
+            fm_set_msg(lng('password_hash not supported, Upgrade PHP version'), 'error');;
+        }
+    } elseif (isset($_GET['fm_usr'], $_GET['fm_pwd'])) {
+        // Logging In
+        sleep(1);
+        if(function_exists('password_verify')) {
+            if (isset($auth_users[$_GET['fm_usr']]) && isset($_GET['fm_pwd']) && password_verify($_GET['fm_pwd'], $auth_users[$_GET['fm_usr']])) {
+                $_SESSION[FM_SESSION_ID]['logged'] = $_GET['fm_usr'];
                 fm_set_msg(lng('You are logged in'));
                 fm_redirect(FM_SELF_URL . '?p=');
             } else {
@@ -355,9 +369,7 @@ if ($use_auth) {
                                 </form>
                             </div>
                         </div>
-                        <div class="footer text-center">
-                            &mdash;&mdash; &copy;
-                            <a href="https://tinyfilemanager.github.io/" target="_blank" class="text-muted" data-version="<?php echo VERSION; ?>">CCP Programmers</a> &mdash;&mdash;
+                        <div class="footer text-center"> 
                         </div>
                     </div>
                 </div>
@@ -1226,7 +1238,7 @@ if (!empty($folders)) {
 }
 
 // upload form
-if (isset($_GET['upload']) && !FM_READONLY) {
+if (isset($_GET['upload_']) && !FM_READONLY) {
     fm_show_header(); // HEADER
     fm_show_nav_path(FM_PATH); // current path
     //get the allowed file extensions
@@ -1624,8 +1636,7 @@ if (isset($_GET['view'])) {
 
     if($online_viewer && $online_viewer !== 'false' && in_array($ext, fm_get_onlineViewer_exts())){
         $is_onlineViewer = true;
-    }
-    elseif ($ext == 'zip' || $ext == 'tar') {
+    } elseif ($ext == 'zip' || $ext == 'tar') {
         $is_zip = true;
         $view_title = 'Archive';
         $filenames = fm_get_zif_info($file_path, $ext);
@@ -1649,7 +1660,7 @@ if (isset($_GET['view'])) {
             <?php if(!$quickView) { ?>
                 <p class="break-word"><b><?php echo $view_title ?> "<?php echo fm_enc(fm_convert_win($file)) ?>"</b></p>
                 <p class="break-word">
-                    Full path: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>
+                    <!-- Full path: <?php echo fm_enc(fm_convert_win($file_path)) ?><br>-->
                     File size: <?php echo ($filesize_raw <= 1000) ? "$filesize_raw bytes" : $filesize; ?><br>
                     MIME-type: <?php echo $mime_type ?><br>
                     <?php
@@ -1691,7 +1702,15 @@ if (isset($_GET['view'])) {
                 </p>
                 <p>
                     <b><a href="?p=<?php echo urlencode(FM_PATH) ?>&amp;dl=<?php echo urlencode($file) ?>"><i class="fa fa-cloud-download"></i> <?php echo lng('Download') ?></a></b> &nbsp;
-                    <b><a href="<?php echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+
+                    <!-- fm_enc(fm_convert_win($file)) -->
+
+                    <b><a href="<?php 
+
+                    $file_url = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/SDS/' . $_GET['p'] . '/' . fm_enc(fm_convert_win($file)); 
+
+                    echo fm_enc($file_url) ?>" target="_blank"><i class="fa fa-external-link-square"></i> <?php echo lng('Open') ?></a></b>
+
                     &nbsp;
                     <?php
                     // ZIP actions
@@ -3445,6 +3464,8 @@ function fm_show_nav_path($path)
                             </div>
                         </div>
                     </li>
+
+
                     <?php if (!FM_READONLY): ?>
                     <li class="nav-item">
                         <a title="<?php echo lng('Upload') ?>" class="nav-link" href="?p=<?php echo urlencode(FM_PATH) ?>&amp;upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> <?php echo lng('Upload') ?></a>
@@ -3453,6 +3474,9 @@ function fm_show_nav_path($path)
                         <a title="<?php echo lng('NewItem') ?>" class="nav-link" href="#createNewItem" data-toggle="modal" data-target="#createNewItem"><i class="fa fa-plus-square"></i> <?php echo lng('NewItem') ?></a>
                     </li>
                     <?php endif; ?>
+
+
+
                     <?php if (FM_USE_AUTH): ?>
                     <li class="nav-item avatar dropdown">
                         <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-user-circle"></i> <?php if(isset($_SESSION[FM_SESSION_ID]['logged'])) { echo $_SESSION[FM_SESSION_ID]['logged']; } ?></a>
